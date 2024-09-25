@@ -14,16 +14,22 @@ pub enum Error {
     Postgres(#[from] tokio_postgres::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error("no primary key found for table")]
+    NoPrimaryKey,
 }
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         error!("Error: {self}");
-        let body = match self {
-            _ => "Unexpected error",
+        let (status, body) = match self {
+            Error::NoPrimaryKey => (StatusCode::BAD_REQUEST, self.to_string()),
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Unexpected error".to_owned(),
+            ),
         };
 
         // it's often easiest to implement `IntoResponse` by calling other implementations
-        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
+        (status, body).into_response()
     }
 }

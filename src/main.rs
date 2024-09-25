@@ -3,7 +3,7 @@ use axum::{
     http::Method,
     middleware,
     response::IntoResponse,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use bb8::Pool;
@@ -15,9 +15,8 @@ use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower_http::trace::TraceLayer;
 use tower_http::{
-    cors::AllowOrigin,
-    compression::CompressionLayer, cors::CorsLayer, decompression::RequestDecompressionLayer,
-    timeout::TimeoutLayer,
+    compression::CompressionLayer, cors::AllowOrigin, cors::CorsLayer,
+    decompression::RequestDecompressionLayer, timeout::TimeoutLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -25,7 +24,7 @@ mod auth;
 mod error;
 
 use auth::authorize;
-use error::Result;
+use error::{Error, Result};
 
 const DEFAULT_TIMEOUT: u64 = 15000;
 // pg-escape does not seem to escape multi word identifiers properly
@@ -61,19 +60,18 @@ async fn main() {
     let timeout = Duration::from_millis(timeout);
 
     // TODO: fix this
-    let cors = CorsLayer::very_permissive()
-        .allow_private_network(true);
-        // .allow_origin(AllowOrigin::any());
-        // .allow_methods([Method::GET, Method::POST, Method::DELETE])
-        /*
-        .allow_origin([
-            "http://railway-develop.app".parse().unwrap(),
-            "http://railway-develop.com".parse().unwrap(),
-            "http://railway-staging.app".parse().unwrap(),
-            "http://railway-staging.com".parse().unwrap(),
-            "http://railway.app".parse().unwrap(),
-            "http://railway.com".parse().unwrap(),
-        ]);*/
+    let cors = CorsLayer::very_permissive().allow_private_network(true);
+    // .allow_origin(AllowOrigin::any());
+    // .allow_methods([Method::GET, Method::POST, Method::DELETE])
+    /*
+    .allow_origin([
+        "http://railway-develop.app".parse().unwrap(),
+        "http://railway-develop.com".parse().unwrap(),
+        "http://railway-staging.app".parse().unwrap(),
+        "http://railway-staging.com".parse().unwrap(),
+        "http://railway.app".parse().unwrap(),
+        "http://railway.com".parse().unwrap(),
+    ]);*/
 
     // build our application with a route
     let app = Router::new()
@@ -82,6 +80,7 @@ async fn main() {
         .route("/directory", delete(delete_directory))
         .route("/objects", get(objects))
         .route("/object", post(create_object))
+        .route("/object", put(update_object))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(TimeoutLayer::new(timeout))
@@ -315,37 +314,32 @@ async fn update_object(
     State(pool): State<ConnectionPool>,
     Query(req): Query<UpdateObjectRequest>,
 ) -> Result<()> {
-    /*
-    const query = knex(args.tableName)
-      .withSchema("public")
-      .where({ [args.pKey]: args.pKeyValue })
-      .update(args.data)
-      .toString();
-
+    let conn = pool.get().await?;
     let query = "SELECT pg_attribute.attname
                  FROM pg_index, pg_class, pg_attribute, pg_namespace
                  WHERE indrelid = pg_class.oid AND nspname = 'public' AND pg_class.relnamespace = pg_namespace.oid AND
                    pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum = any(pg_index.indkey) AND indisprimary AND
                    relName = $1";
-    let row = conn.query_opt(query, &[&req.directory]).await?;
-    let primary_key: Option<String> = row.map(|r| r.try_get(0)).transpose()?;
+    let row = conn
+        .query_opt(query, &[&req.directory])
+        .await?
+        .ok_or(Error::NoPrimaryKey)?;
+    let primary_key: String = row.try_get(0)?;
 
     let values = req
         .properties
-        .values()
-        .map(|value| escape_literal(value))
+        .iter()
+        .map(|(key, value)| format!("{} = {}", escape_literal(key), escape_literal(value)))
         .collect::<Vec<String>>()
         .join(", ");
     let query = dbg!(format!(
         "UPDATE {} SET {} WHERE {} = $1",
-        escape_identifier(&req.directory)
+        escape_identifier(&req.directory),
         values,
         escape_identifier(&primary_key)
     ));
 
-    let conn = pool.get().await?;
-    let _rows = conn.query(&query, &[req.id]).await?;
+    let _rows = conn.query(&query, &[&req.id]).await?;
 
-    */
     Ok(())
 }
