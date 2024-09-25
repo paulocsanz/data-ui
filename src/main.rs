@@ -61,7 +61,8 @@ async fn main() {
     let timeout = Duration::from_millis(timeout);
 
     // TODO: fix this
-    let cors = CorsLayer::very_permissive();
+    let cors = CorsLayer::very_permissive()
+        .allow_private_network(true);
         // .allow_origin(AllowOrigin::any());
         // .allow_methods([Method::GET, Method::POST, Method::DELETE])
         /*
