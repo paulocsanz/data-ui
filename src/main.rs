@@ -32,8 +32,8 @@ const VALID_CONSTRAINTS: [&str; 3] = ["PRIMARY KEY", "NOT NULL", "UNIQUE"];
 
 type ConnectionPool = Pool<PostgresConnectionManager<NoTls>>;
 
-fn get_url() -> &'static str {
-    "postgresql://postgres:KkaWbejhPSjDSeWeZIwerYZhSSrDeGIZ@tcp-proxy.railway-develop.app:24022/railway"
+fn get_url() -> String {
+    dbg!(std::env::var("DATABASE_URL").expect("No DATABASE_URL specified, unable to contact DB"))
 }
 
 #[tokio::main]
@@ -94,7 +94,7 @@ async fn main() {
 
 async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResponse> {
     println!("Directories");
-    let conn = pool.get().await?;
+    let conn = dbg!(pool.get().await)?;
 
     let rows = conn
         .query(
@@ -104,7 +104,7 @@ async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResp
         .await?;
 
     let mut tables: Vec<String> = Vec::with_capacity(rows.len());
-    for row in rows {
+    for row in dbg!(rows) {
         tables.push(row.try_get(0)?);
     }
     Ok(Json(tables))

@@ -1,12 +1,11 @@
 use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
 
 pub async fn authorize(request: Request, next: Next) -> Result<Response, StatusCode> {
-    // #[cfg(not(debug_assertions))]
-    let token = std::env::var("TOKEN").ok();
-
-    println!("BROOOOOO {token:?} {:?}", request.headers());
     #[cfg(debug_assertions)]
     return Ok(next.run(request).await);
+
+     #[cfg(not(debug_assertions))]
+    let token = std::env::var("TOKEN").ok();
 
     #[cfg(not(debug_assertions))]
     if let Some(authorization) = request.headers().get(axum::http::header::AUTHORIZATION) {
