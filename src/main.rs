@@ -49,7 +49,7 @@ async fn main() {
     let manager = PostgresConnectionManager::new_from_stringlike(get_url(), NoTls).unwrap();
     let pool = Pool::builder()
         .max_size(5)
-        .min_idle(0)
+        .min_idle(Some(0))
         .idle_timeout(Some(Duration::from_secs(60)))
         .build(manager)
         .await
@@ -304,13 +304,14 @@ async fn create_object(
 struct UpdateObjectRequest {
     id: String,
     directory: String,
-    properties: HashMap<String, String>;
+    properties: HashMap<String, String>,
 }
 
 async fn update_object(
     State(pool): State<ConnectionPool>,
     Query(req): Query<UpdateObjectRequest>,
 ) -> Result<()> {
+    /*
     const query = knex(args.tableName)
       .withSchema("public")
       .where({ [args.pKey]: args.pKeyValue })
@@ -341,5 +342,6 @@ async fn update_object(
     let conn = pool.get().await?;
     let _rows = conn.query(&query, &[req.id]).await?;
 
+    */
     Ok(())
 }
