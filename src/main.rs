@@ -60,8 +60,8 @@ async fn main() {
     let timeout = Duration::from_millis(timeout);
 
     // TODO: fix this
-    let cors = CorsLayer::permissive()
-        .allow_methods([Method::GET, Method::POST, Method::DELETE])
+    let cors = CorsLayer::permissive();
+        // .allow_methods([Method::GET, Method::POST, Method::DELETE])
         /*
         .allow_origin([
             "http://railway-develop.app".parse().unwrap(),
@@ -70,7 +70,7 @@ async fn main() {
             "http://railway-staging.com".parse().unwrap(),
             "http://railway.app".parse().unwrap(),
             "http://railway.com".parse().unwrap(),
-        ])*/;
+        ]);*/
 
     // build our application with a route
     let app = Router::new()
