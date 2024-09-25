@@ -82,11 +82,11 @@ async fn main() {
         .route("/objects", get(objects))
         .route("/object", post(create_object))
         .layer(cors)
-        .layer(TraceLayer::new_for_http())
-        .layer(TimeoutLayer::new(timeout))
+        // .layer(TraceLayer::new_for_http())
+        // .layer(TimeoutLayer::new(timeout))
         .layer(middleware::from_fn(authorize))
-        .layer(RequestDecompressionLayer::new())
-        .layer(CompressionLayer::new())
+        // .layer(RequestDecompressionLayer::new())
+        // .layer(CompressionLayer::new())
         .with_state(pool);
 
     let listener = TcpListener::bind("0.0.0.0:9009").await.unwrap();
