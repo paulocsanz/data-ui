@@ -93,6 +93,7 @@ async fn main() {
 }
 
 async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResponse> {
+    println!("Directories");
     let conn = pool.get().await?;
 
     let rows = conn
