@@ -15,6 +15,7 @@ use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower_http::trace::TraceLayer;
 use tower_http::{
+    cors::AllowOrigin,
     compression::CompressionLayer, cors::CorsLayer, decompression::RequestDecompressionLayer,
     timeout::TimeoutLayer,
 };
@@ -61,7 +62,7 @@ async fn main() {
 
     // TODO: fix this
     let cors = CorsLayer::permissive()
-        .allow_origin(["*".parse().unwrap()]);
+        .allow_origin(AllowOrigin::any());
         // .allow_methods([Method::GET, Method::POST, Method::DELETE])
         /*
         .allow_origin([
