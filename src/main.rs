@@ -1,6 +1,6 @@
 use axum::{
     extract::{Query, State},
-    http::Method,
+    http::{HeaderName, Method},
     middleware,
     response::IntoResponse,
     routing::{delete, get, post, put},
@@ -15,8 +15,8 @@ use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower_http::trace::TraceLayer;
 use tower_http::{
-    compression::CompressionLayer, cors::AllowOrigin, cors::CorsLayer,
-    decompression::RequestDecompressionLayer, timeout::TimeoutLayer,
+    compression::CompressionLayer, cors::CorsLayer, decompression::RequestDecompressionLayer,
+    timeout::TimeoutLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -59,19 +59,29 @@ async fn main() {
     let timeout = timeout.parse::<u64>().unwrap_or(DEFAULT_TIMEOUT);
     let timeout = Duration::from_millis(timeout);
 
-    // TODO: fix this
-    let cors = CorsLayer::very_permissive().allow_private_network(true);
-    // .allow_origin(AllowOrigin::any());
-    // .allow_methods([Method::GET, Method::POST, Method::DELETE])
-    /*
-    .allow_origin([
-        "http://railway-develop.app".parse().unwrap(),
-        "http://railway-develop.com".parse().unwrap(),
-        "http://railway-staging.app".parse().unwrap(),
-        "http://railway-staging.com".parse().unwrap(),
-        "http://railway.app".parse().unwrap(),
-        "http://railway.com".parse().unwrap(),
-    ]);*/
+    let cors = CorsLayer::new()
+        .allow_credentials(false)
+        .allow_private_network(true)
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::DELETE,
+            Method::PUT,
+            Method::HEAD,
+            Method::OPTIONS,
+        ])
+        .allow_headers(vec![
+            HeaderName::from_static("authorization"),
+            HeaderName::from_static("content-type"),
+        ])
+        .allow_origin([
+            "https://railway-develop.app".parse().unwrap(),
+            "https://railway-develop.com".parse().unwrap(),
+            "https://railway-staging.app".parse().unwrap(),
+            "https://railway-staging.com".parse().unwrap(),
+            "https://railway.app".parse().unwrap(),
+            "https://railway.com".parse().unwrap(),
+        ]);
 
     // build our application with a route
     let app = Router::new()
@@ -81,10 +91,12 @@ async fn main() {
         .route("/objects", get(objects))
         .route("/object", post(create_object))
         .route("/object", put(update_object))
+        .route("/object", delete(delete_object))
+        .route("/generate/dummy", post(generate_dummy))
+        .layer(middleware::from_fn(authorize))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(TimeoutLayer::new(timeout))
-        .layer(middleware::from_fn(authorize))
         .layer(RequestDecompressionLayer::new())
         .layer(CompressionLayer::new())
         .with_state(pool);
@@ -312,7 +324,7 @@ struct UpdateObjectRequest {
 
 async fn update_object(
     State(pool): State<ConnectionPool>,
-    Query(req): Query<UpdateObjectRequest>,
+    Json(req): Json<UpdateObjectRequest>,
 ) -> Result<()> {
     let conn = pool.get().await?;
     let query = "SELECT pg_attribute.attname
@@ -340,6 +352,74 @@ async fn update_object(
     ));
 
     let _rows = conn.query(&query, &[&req.id]).await?;
+
+    Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DeleteObjectRequest {
+    id: String,
+    directory: String,
+}
+
+async fn delete_object(
+    State(pool): State<ConnectionPool>,
+    Query(req): Query<UpdateObjectRequest>,
+) -> Result<()> {
+    let conn = pool.get().await?;
+    let query = "SELECT pg_attribute.attname
+                 FROM pg_index, pg_class, pg_attribute, pg_namespace
+                 WHERE indrelid = pg_class.oid AND nspname = 'public' AND pg_class.relnamespace = pg_namespace.oid AND
+                   pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum = any(pg_index.indkey) AND indisprimary AND
+                   relName = $1";
+    let row = conn
+        .query_opt(query, &[&req.directory])
+        .await?
+        .ok_or(Error::NoPrimaryKey)?;
+    let primary_key: String = row.try_get(0)?;
+
+    let query = dbg!(format!(
+        "DELETE FROM {} WHERE {} = $1",
+        escape_identifier(&req.directory),
+        escape_identifier(&primary_key)
+    ));
+
+    let _rows = conn.query(&query, &[&req.id]).await?;
+
+    Ok(())
+}
+
+async fn generate_dummy(State(pool): State<ConnectionPool>) -> Result<()> {
+    let conn = pool.get().await?;
+
+    let queries = [
+        "CREATE TABLE authors (
+  id SERIAL NOT NULL PRIMARY KEY,
+  first_name varchar(50) NOT NULL,
+  last_name varchar(50) NOT NULL,
+  email varchar(100) NOT NULL UNIQUE
+);",
+        "CREATE TABLE jokes (
+  id SERIAL NOT NULL PRIMARY KEY,
+  setup varchar(255) NOT NULL,
+  punchline varchar(500)
+);",
+        "INSERT INTO authors VALUES 
+('1','Thomas','Tank','thomas.the.tank@example.org'),
+('2','Johnny','Coalheart','JCoal@example.com'),
+('3','Brandy','Smokestack','smokestack@example.org'),
+('4','Ima','Caboose','the.boose.is.loose@example.com'),
+('5','Megan','Trainer','megan@example.com');",
+        "INSERT INTO jokes VALUES 
+('1','I was gonna tell a joke','but I lost my train of thought'),
+('2','How do trains eat?','They chew-chew'),
+('3','Why did the crazy guy steal the train?','He had locomotives');",
+    ];
+
+    for query in queries {
+        conn.query(query, &[]).await?;
+    }
 
     Ok(())
 }
