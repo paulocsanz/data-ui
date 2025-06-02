@@ -83,7 +83,6 @@ async fn main() {
             "https://railway.com".parse().unwrap(),
         ]);
 
-    // build our application with a route
     let app = Router::new()
         .route("/directories", get(directories))
         .route("/directory", post(create_directory))
@@ -108,6 +107,7 @@ async fn main() {
 
 async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResponse> {
     println!("Directories");
+
     let conn = dbg!(pool.get().await)?;
 
     let rows = conn
