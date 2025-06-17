@@ -25,7 +25,7 @@ impl IntoResponse for Error {
             Error::NoPrimaryKey => (StatusCode::BAD_REQUEST, self.to_string()),
             _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Unexpected error".to_owned(),
+                self.to_string(), // "Unexpected error".to_owned(),
             ),
         };
 
