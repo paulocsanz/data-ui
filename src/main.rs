@@ -90,7 +90,8 @@ async fn main() {
         .route("/objects", get(objects))
         .route("/object", post(create_object))
         .route("/object", put(update_object))
-        .route("/object", delete(delete_object))
+        .route("/objects", delete(delete_objects))
+        .route("/property", post(create_property))
         .route("/generate/dummy", post(generate_dummy))
         .layer(middleware::from_fn(authorize))
         .layer(cors)
@@ -118,7 +119,7 @@ async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResp
         .await?;
 
     let mut tables: Vec<String> = Vec::with_capacity(rows.len());
-    for row in dbg!(rows) {
+    for row in rows {
         tables.push(row.try_get(0)?);
     }
     Ok(Json(tables))
@@ -126,7 +127,7 @@ async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResp
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct CreateDirectoryProperty {
+struct CreateProperty {
     name: String,
     #[serde(rename = "type")]
     ty: String,
@@ -141,7 +142,7 @@ struct CreateDirectoryProperty {
 struct CreateDirectoryRequest {
     directory: String,
     #[serde(default)]
-    properties: Vec<CreateDirectoryProperty>,
+    properties: Vec<CreateProperty>,
 }
 
 async fn create_directory(
@@ -152,7 +153,7 @@ async fn create_directory(
         let mut prop = format!(
             "{} {}",
             escape_identifier(&p.name),
-            escape_identifier(&p.ty)
+            p.ty
         );
         if let Some(default) = &p.default {
             prop = format!("{prop} DEFAULT {}", escape_literal(default));
@@ -189,7 +190,7 @@ struct DeleteDirectoryRequest {
 
 async fn delete_directory(
     State(pool): State<ConnectionPool>,
-    Query(req): Query<DeleteDirectoryRequest>,
+    Json(req): Json<DeleteDirectoryRequest>,
 ) -> Result<impl IntoResponse> {
     let query = format!("DROP TABLE {}", escape_identifier(&req.directory),);
 
@@ -211,6 +212,7 @@ struct ObjectsRequest {
 struct ObjectsResponse {
     objects: Vec<Option<serde_json::Value>>,
     property_names: Vec<String>,
+    property_types: Vec<String>,
     primary_key: Option<String>,
     count: i64,
 }
@@ -241,6 +243,7 @@ async fn objects(
 
     let mut objects = Vec::with_capacity(rows.len());
     let property_names = properties.iter().map(|(name, _)| name.to_owned()).collect();
+    let property_types = properties.iter().map(|(_, ty)| ty.to_owned()).collect();
 
     for row in rows {
         let mut json: Option<serde_json::Value> = row.try_get(0)?;
@@ -275,6 +278,7 @@ async fn objects(
         count,
         primary_key,
         property_names,
+        property_types,
     }))
 }
 
@@ -287,7 +291,7 @@ struct CreateObjectRequest {
 
 async fn create_object(
     State(pool): State<ConnectionPool>,
-    Query(req): Query<CreateObjectRequest>,
+    Json(req): Json<CreateObjectRequest>,
 ) -> Result<()> {
     let names = req
         .properties
@@ -303,6 +307,7 @@ async fn create_object(
         .map(|value| escape_literal(value))
         .collect::<Vec<String>>()
         .join(", ");
+    // TODO: doesnt work if all values are default
     let query = dbg!(format!(
         "INSERT INTO {} ({names}) VALUES ({values})",
         escape_identifier(&req.directory)
@@ -312,6 +317,46 @@ async fn create_object(
     let _rows = conn.query(&query, &[]).await?;
 
     Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreatePropertyRequest {
+    directory: String,
+    property: CreateProperty,
+}
+
+async fn create_property(
+    State(pool): State<ConnectionPool>,
+    Json(req): Json<CreatePropertyRequest>,
+) -> Result<()> {
+    let mut prop = format!(
+        "{} {}",
+        escape_identifier(&req.property.name),
+        req.property.ty
+    );
+    if let Some(default) = &req.property.default {
+        prop = format!("{prop} DEFAULT {}", escape_literal(default));
+    }
+
+    if let Some(constraint) = &req.property.constraint {
+        // TODO: error here otherwise?
+        if VALID_CONSTRAINTS.contains(&constraint.as_str()) {
+            prop = format!("{prop} {constraint}");
+        }
+    }
+
+    let query = dbg!(format!(
+        "ALTER TABLE {} ADD COLUMN {prop}",
+        escape_identifier(&req.directory),
+    ));
+
+    let conn = pool.get().await?;
+
+    // TODO: return created table
+    let _rows = conn.query(&query, &[]).await?;
+
+    return Ok(());
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -359,13 +404,14 @@ async fn update_object(
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DeleteObjectRequest {
-    id: String,
+    // TODO: fix this, primary key can be multiple types
+    ids: Vec<i32>,
     directory: String,
 }
 
-async fn delete_object(
+async fn delete_objects(
     State(pool): State<ConnectionPool>,
-    Query(req): Query<UpdateObjectRequest>,
+    Json(req): Json<DeleteObjectRequest>,
 ) -> Result<()> {
     let conn = pool.get().await?;
     let query = "SELECT pg_attribute.attname
@@ -380,12 +426,12 @@ async fn delete_object(
     let primary_key: String = row.try_get(0)?;
 
     let query = dbg!(format!(
-        "DELETE FROM {} WHERE {} = $1",
+        "DELETE FROM {} WHERE {} = ANY ($1)",
         escape_identifier(&req.directory),
         escape_identifier(&primary_key)
     ));
 
-    let _rows = conn.query(&query, &[&req.id]).await?;
+    let _rows = conn.query(&query, &[&req.ids]).await?;
 
     Ok(())
 }
