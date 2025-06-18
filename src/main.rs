@@ -92,6 +92,7 @@ async fn main() {
         .route("/object", put(update_object))
         .route("/objects", delete(delete_objects))
         .route("/property", post(create_property))
+        .route("/sql", post(sql))
         .route("/generate/dummy", post(generate_dummy))
         .layer(middleware::from_fn(authorize))
         .layer(cors)
@@ -106,9 +107,34 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResponse> {
-    println!("Directories");
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SqlRequest {
+    query: String,
+}
 
+async fn sql(
+    State(pool): State<ConnectionPool>,
+    Json(req): Json<SqlRequest>,
+) -> Result<impl IntoResponse> {
+    let conn = dbg!(pool.get().await)?;
+
+    let rows = conn
+        .query(&req.query,
+            &[],
+        )
+        .await?;
+    let mut fields: Vec<serde_json::Value> = Vec::new();
+    for row in &rows {
+        for i in 0..rows.len() {
+            fields.push(row.get(i));
+        }
+    }
+
+    Ok(Json(dbg!(fields)))
+}
+
+async fn directories(State(pool): State<ConnectionPool>) -> Result<impl IntoResponse> {
     let conn = dbg!(pool.get().await)?;
 
     let rows = conn
