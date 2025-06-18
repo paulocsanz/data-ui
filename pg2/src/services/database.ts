@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 import { logger } from '@/utils/logger';
 import { ConnectionError, DatabaseError } from '@/utils/errors';
+import { env } from '@/config/environment';
 
 export class DatabaseService {
   private client: Client | null = null;
@@ -138,9 +139,10 @@ export class DatabaseService {
 }
 
 export async function createDatabaseService(
-  connectionString: string
+  database: string
 ): Promise<DatabaseService> {
   const service = new DatabaseService();
+  const connectionString = `postgresql://${env.PGUSER}:${env.PGPASSWORD}@${env.PGHOST}:${env.PORT}/${database}`;
   await service.connect(connectionString);
   return service;
 }

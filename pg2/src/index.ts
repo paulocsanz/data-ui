@@ -24,7 +24,11 @@ import {
 /**
  * Create a standardized JSON response
  */
-function createResponse(data: unknown, status: number, opt?: { origin: string }): Response {
+function createResponse(
+  data: unknown,
+  status: number,
+  opt?: { origin: string }
+): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -37,7 +41,10 @@ function createResponse(data: unknown, status: number, opt?: { origin: string })
 /**
  * Create an error response
  */
-function createErrorResponse(error: unknown, opt?: { origin: string }): Response {
+function createErrorResponse(
+  error: unknown,
+  opt?: { origin: string }
+): Response {
   const normalizedError = normalizeError(error);
 
   logger.error('Request failed', normalizedError);
@@ -69,7 +76,7 @@ function handleOptions({ origin }: { origin: string }): Response {
  */
 async function handleRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
-  const origin = request.headers.get("origin") ?? "";
+  const origin = request.headers.get('origin') ?? '';
   const { pathname, method } = {
     pathname: url.pathname,
     method: request.method,
@@ -203,7 +210,7 @@ async function main(): Promise<void> {
     hostname: '0.0.0.0',
 
     async fetch(request: Request): Promise<Response> {
-      const origin = request.headers.get("origin") ?? "";
+      const origin = request.headers.get('origin') ?? '';
       try {
         return await withTimeout(handleRequest(request), env.TIMEOUT);
       } catch (error) {

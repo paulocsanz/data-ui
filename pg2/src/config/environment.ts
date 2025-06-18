@@ -8,6 +8,10 @@ const envSchema = z.object({
   TIMEOUT: z.string().transform(Number).default('15000'),
   TOKEN: z.string().optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  PGUSER: z.string().optional(),
+  PGPASSWORD: z.string().optional(),
+  PGHOST: z.string().optional(),
+  PGPORT: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof envSchema>;
