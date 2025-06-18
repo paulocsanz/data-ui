@@ -150,11 +150,7 @@ async fn create_directory(
     Json(req): Json<CreateDirectoryRequest>,
 ) -> Result<impl IntoResponse> {
     let properties = req.properties.into_iter().map(|p| {
-        let mut prop = format!(
-            "{} {}",
-            escape_identifier(&p.name),
-            p.ty
-        );
+        let mut prop = format!("{} {}", escape_identifier(&p.name), p.ty);
         if let Some(default) = &p.default {
             prop = format!("{prop} DEFAULT {}", escape_literal(default));
         }
@@ -287,6 +283,8 @@ async fn objects(
 struct CreateObjectRequest {
     properties: HashMap<String, String>,
     directory: String,
+    #[serde(default)]
+    primary_key: Option<String>,
 }
 
 async fn create_object(
@@ -307,11 +305,25 @@ async fn create_object(
         .map(|value| escape_literal(value))
         .collect::<Vec<String>>()
         .join(", ");
-    // TODO: doesnt work if all values are default
-    let query = dbg!(format!(
-        "INSERT INTO {} ({names}) VALUES ({values})",
-        escape_identifier(&req.directory)
-    ));
+    let query = if names.is_empty() && values.is_empty() {
+        if let Some(primary_key) = &req.primary_key {
+            format!(
+                "INSERT INTO {} ({}) VALUES (DEFAULT)",
+                escape_identifier(&req.directory),
+                escape_identifier(primary_key),
+            )
+        } else {
+            format!(
+                "INSERT INTO {} ({names}) VALUES ({values})",
+                escape_identifier(&req.directory)
+            )
+        }
+    } else {
+        format!(
+            "INSERT INTO {} ({names}) VALUES ({values})",
+            escape_identifier(&req.directory)
+        )
+    };
 
     let conn = pool.get().await?;
     let _rows = conn.query(&query, &[]).await?;
