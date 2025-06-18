@@ -40,13 +40,13 @@ bun run lint
 
 ### Database Operations
 
-- `GET /directories?driver=<url>` - List all tables
+- `GET /directories?drive=<url>` - List all tables
 - `POST /directory` - Create a new table
 - `DELETE /directory` - Delete a table
 
 ### Data Operations
 
-- `GET /objects?directory=<name>&driver=<url>&cursor=<n>&limit=<n>` - Get table data
+- `GET /objects?directory=<name>&drive=<url>&cursor=<n>&limit=<n>` - Get table data
 - `POST /object` - Insert new row
 - `PUT /object` - Update existing row
 - `DELETE /objects` - Delete rows
@@ -101,7 +101,7 @@ src/
 POST /directory
 {
   "directory": "users",
-  "driver": "postgresql://...",
+  "drive": "postgresql://...",
   "properties": [
     {
       "name": "id",
@@ -119,7 +119,7 @@ POST /directory
 
 ### Query Data
 ```bash
-GET /objects?directory=users&driver=postgresql://...&limit=10&cursor=0
+GET /objects?directory=users&drive=postgresql://...&limit=10&cursor=0
 ```
 
 ### Insert Data
@@ -127,7 +127,7 @@ GET /objects?directory=users&driver=postgresql://...&limit=10&cursor=0
 POST /object
 {
   "directory": "users",
-  "driver": "postgresql://...",
+  "drive": "postgresql://...",
   "properties": {
     "email": "user@example.com",
     "name": "John Doe"

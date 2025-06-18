@@ -17,7 +17,7 @@ import type {
 
 export class PostgreSQLService {
   async executeSql(request: SqlRequest): Promise<unknown[]> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Executing SQL query', { queryLength: request.query.length });
@@ -42,8 +42,8 @@ export class PostgreSQLService {
     }
   }
 
-  async getDirectories(request: { driver: string }): Promise<string[]> {
-    const db = await createDatabaseService(request.driver);
+  async getDirectories(request: { drive: string }): Promise<string[]> {
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Fetching database tables');
@@ -62,7 +62,7 @@ export class PostgreSQLService {
   }
 
   async createDirectory(request: CreateDirectoryRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Creating table', { tableName: request.directory });
@@ -106,7 +106,7 @@ export class PostgreSQLService {
   }
 
   async deleteDirectory(request: DeleteDirectoryRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Deleting table', { tableName: request.directory });
@@ -128,7 +128,7 @@ export class PostgreSQLService {
   }
 
   async getObjects(request: ObjectsRequest): Promise<ObjectsResponse> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Fetching table data', {
@@ -203,7 +203,7 @@ export class PostgreSQLService {
   }
 
   async createObject(request: CreateObjectRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Creating table row', { tableName: request.directory });
@@ -246,7 +246,7 @@ export class PostgreSQLService {
   }
 
   async createProperty(request: CreatePropertyRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Adding table column', {
@@ -285,7 +285,7 @@ export class PostgreSQLService {
   }
 
   async updateObject(request: UpdateObjectRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Updating table row', {
@@ -329,7 +329,7 @@ export class PostgreSQLService {
   }
 
   async deleteObjects(request: DeleteObjectRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Deleting table rows', {
@@ -364,7 +364,7 @@ export class PostgreSQLService {
   }
 
   async generateDummy(request: GenerateDummyRequest): Promise<void> {
-    const db = await createDatabaseService(request.driver);
+    const db = await createDatabaseService(request.drive);
 
     try {
       logger.info('Generating dummy data');
