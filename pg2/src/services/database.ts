@@ -53,7 +53,7 @@ export class DatabaseService {
         sql: sql.substring(0, 100),
         error,
       });
-      throw new DatabaseError('Query execution failed', error as Error);
+      throw new DatabaseError(`Database Error: ${error.message}`, error as Error);
     }
   }
 
