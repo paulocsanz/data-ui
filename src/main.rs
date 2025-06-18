@@ -398,7 +398,7 @@ async fn update_object(
     let values = req
         .properties
         .iter()
-        .map(|(key, value)| format!("{} = {}", escape_literal(key), escape_literal(value)))
+        .map(|(key, value)| format!("{} = {}", escape_identifier(key), escape_literal(value)))
         .collect::<Vec<String>>()
         .join(", ");
     let query = dbg!(format!(
