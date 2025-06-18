@@ -22,21 +22,13 @@ export class PostgreSQLService {
     try {
       logger.info('Executing SQL query', { queryLength: request.query.length });
 
+      // TODO: stream it
       const result = await db.query(request.query);
-      const fields: unknown[] = [];
-
-      // Flatten all row data into a single array (matching original API behavior)
-      for (const row of result) {
-        const rowObj = row as Record<string, unknown>;
-        for (let i = 0; i < result.length; i++) {
-          fields.push(rowObj[String(i)]);
-        }
-      }
 
       logger.info('SQL query executed successfully', {
-        resultCount: fields.length,
+        resultCount: result.length,
       });
-      return fields;
+      return result;
     } finally {
       await db.disconnect();
     }
