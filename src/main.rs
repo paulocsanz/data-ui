@@ -374,7 +374,7 @@ async fn create_property(
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct UpdateObjectRequest {
-    id: String,
+    id: i32,
     directory: String,
     properties: HashMap<String, String>,
 }
