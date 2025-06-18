@@ -53,7 +53,10 @@ export class DatabaseService {
         sql: sql.substring(0, 100),
         error,
       });
-      throw new DatabaseError(`Database Error: ${error.message}`, error as Error);
+      throw new DatabaseError(
+        error instanceof Error ? error.message : 'Query execution failed',
+        error as Error
+      );
     }
   }
 
@@ -143,7 +146,7 @@ export async function createDatabaseService(
 ): Promise<DatabaseService> {
   const service = new DatabaseService();
   const connectionString = `postgresql://${env.PGUSER}:${env.PGPASSWORD}@${env.PGHOST}:${env.PGPORT}/${database}`;
-  logger.info("Connect", { connectionString });
+  logger.info('Connect', { connectionString });
   await service.connect(connectionString);
   return service;
 }

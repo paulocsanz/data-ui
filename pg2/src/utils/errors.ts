@@ -88,7 +88,7 @@ export function normalizeError(error: unknown): BaseError {
   }
 
   if (error instanceof Error) {
-    logger.error(`Error: ${error.message}`, { error })
+    logger.error(`Error: ${error.message}`, { error });
     return new DatabaseError('An unexpected error occurred', error);
   }
 

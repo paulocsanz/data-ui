@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 export const SQL_CONSTRAINTS = ['PRIMARY KEY', 'NOT NULL', 'UNIQUE'] as const;
 export type SqlConstraint = (typeof SQL_CONSTRAINTS)[number];
 

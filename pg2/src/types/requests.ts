@@ -104,7 +104,7 @@ export const UpdateObjectRequestSchema = BaseRequestSchema.extend({
     .max(63)
     .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid table name'),
   properties: z
-    .record(z.string(), z.string())
+    .record(z.string(), z.string().nullable())
     .refine(
       (obj) => Object.keys(obj).length > 0,
       'At least one property must be updated'

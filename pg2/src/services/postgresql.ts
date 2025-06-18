@@ -310,7 +310,7 @@ export class PostgreSQLService {
       const setClause = Object.entries(request.properties)
         .map(
           ([key, value]) =>
-            `${db.escapeIdentifier(key)} = ${db.escapeLiteral(value)}`
+            `${db.escapeIdentifier(key)} = COALESCE(${value != null ? db.escapeLiteral(value) : 'NULL'}, ${db.escapeIdentifier(key)})`
         )
         .join(', ');
 
