@@ -20,7 +20,10 @@ High-performance PostgreSQL API service built with Bun and TypeScript.
 bun install
 
 # Set environment variables
-export DATABASE_URL="postgresql://user:password@host:port/database"
+export PGUSER=user
+export PGPASSWORD=password
+export PGPORT=port
+export PGHOST=host
 export TOKEN="your-api-token"  # Optional in development
 
 # Start development server
@@ -101,7 +104,7 @@ src/
 POST /directory
 {
   "directory": "users",
-  "drive": "postgresql://...",
+  "drive": "mydb",
   "properties": [
     {
       "name": "id",
@@ -119,7 +122,7 @@ POST /directory
 
 ### Query Data
 ```bash
-GET /objects?directory=users&drive=postgresql://...&limit=10&cursor=0
+GET /objects?directory=users&drive=mydb&limit=10&cursor=0
 ```
 
 ### Insert Data
@@ -127,7 +130,7 @@ GET /objects?directory=users&drive=postgresql://...&limit=10&cursor=0
 POST /object
 {
   "directory": "users",
-  "drive": "postgresql://...",
+  "drive": "mydb",
   "properties": {
     "email": "user@example.com",
     "name": "John Doe"

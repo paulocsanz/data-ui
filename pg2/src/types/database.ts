@@ -1,13 +1,5 @@
 import { z } from 'zod';
 
-export const DatabaseDriveSchema = z
-  .string()
-  .url()
-  .refine(
-    (url) => url.startsWith('postgresql://') || url.startsWith('postgres://'),
-    { message: 'Drive must be a valid PostgreSQL connection string' }
-  );
-
 export const SQL_CONSTRAINTS = ['PRIMARY KEY', 'NOT NULL', 'UNIQUE'] as const;
 export type SqlConstraint = (typeof SQL_CONSTRAINTS)[number];
 

@@ -142,7 +142,8 @@ export async function createDatabaseService(
   database: string
 ): Promise<DatabaseService> {
   const service = new DatabaseService();
-  const connectionString = `postgresql://${env.PGUSER}:${env.PGPASSWORD}@${env.PGHOST}:${env.PORT}/${database}`;
+  const connectionString = `postgresql://${env.PGUSER}:${env.PGPASSWORD}@${env.PGHOST}:${env.PGPORT}/${database}`;
+  logger.info("Connect", { connectionString });
   await service.connect(connectionString);
   return service;
 }

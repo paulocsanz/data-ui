@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { DatabaseDriveSchema, SQL_CONSTRAINTS } from './database';
+import { SQL_CONSTRAINTS } from './database';
 
 const BaseRequestSchema = z.object({
-  drive: DatabaseDriveSchema,
+  drive: z.string(),
 });
 
 export const SqlRequestSchema = BaseRequestSchema.extend({

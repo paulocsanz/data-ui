@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 export abstract class BaseError extends Error {
   abstract readonly statusCode: number;
   abstract readonly code: string;
@@ -86,6 +88,7 @@ export function normalizeError(error: unknown): BaseError {
   }
 
   if (error instanceof Error) {
+    logger.error(`Error: ${error.message}`, { error })
     return new DatabaseError('An unexpected error occurred', error);
   }
 

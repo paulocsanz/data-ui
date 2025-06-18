@@ -40,7 +40,7 @@ export async function getDirectories(request: Request): Promise<string[]> {
   const params = Object.fromEntries(url.searchParams.entries());
 
   const schema = z.object({
-    drive: z.string().url(),
+    drive: z.string(),
   });
 
   const validatedParams = validateQueryParams(schema, params);
@@ -89,7 +89,7 @@ export async function getObjects(request: Request): Promise<unknown> {
     directory: z.string().min(1),
     cursor: z.number().int().min(0).optional().default(0),
     limit: z.number().int().min(1).max(100).optional().default(10),
-    drive: z.string().url(),
+    drive: z.string(),
   });
 
   const validatedParams = validateQueryParams(schema, params);
