@@ -1,28 +1,39 @@
 {
-  "name": "pg2",
-  "module": "index.ts",
+  "name": "postgresql-api",
+  "version": "1.0.0",
+  "description": "High-performance PostgreSQL API service built with Bun and TypeScript",
+  "main": "dist/index.js",
+  "module": "src/index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --fix && prettier --write src",
+    "lint:check": "eslint src && prettier --check src",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["postgresql", "api", "bun", "typescript", "database"],
+  "author": "Paulo",
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
-    "prettier": "^3.5.3"
-  },
-  "scripts": {
-    "dev": "bun run --watch index.ts",
-    "start": "bun run index.ts",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --fix && prettier --write .",
-    "lint:check": "eslint . && prettier --check ."
-  },
-  "peerDependencies": {
+    "prettier": "^3.5.3",
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@types/pg": "^8.15.4",
     "dotenv": "^16.5.0",
-    "pg": "^8.16.0"
+    "pg": "^8.16.0",
+    "zod": "^3.25.67"
   }
 }
