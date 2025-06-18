@@ -1,5 +1,5 @@
 
-const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS: string[] = [
   'https://railway-develop.app',
   'https://railway-develop.com',
   'https://railway-staging.app',
@@ -19,9 +19,9 @@ const ALLOWED_METHODS = [
 
 const ALLOWED_HEADERS = ['authorization', 'content-type'] as const;
 
-export function createCorsHeaders(): Record<string, string> {
+export function createCorsHeaders(opt?: { origin: string }): Record<string, string> {
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.join(', '),
+    'Access-Control-Allow-Origin': opt?.origin && ALLOWED_ORIGINS.includes(opt.origin) ? opt.origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': ALLOWED_METHODS.join(', '),
     'Access-Control-Allow-Headers': ALLOWED_HEADERS.join(', '),
     'Access-Control-Allow-Credentials': 'false',

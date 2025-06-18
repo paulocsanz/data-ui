@@ -24,12 +24,12 @@ import {
 /**
  * Create a standardized JSON response
  */
-function createResponse(data: unknown, status = 200): Response {
+function createResponse(data: unknown, status: number, opt?: { origin: string }): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      ...createCorsHeaders(),
+      ...createCorsHeaders(opt),
     },
   });
 }
@@ -37,7 +37,7 @@ function createResponse(data: unknown, status = 200): Response {
 /**
  * Create an error response
  */
-function createErrorResponse(error: unknown): Response {
+function createErrorResponse(error: unknown, opt?: { origin: string }): Response {
   const normalizedError = normalizeError(error);
 
   logger.error('Request failed', normalizedError);
@@ -49,17 +49,18 @@ function createErrorResponse(error: unknown): Response {
         code: normalizedError.code,
       },
     },
-    normalizedError.statusCode
+    normalizedError.statusCode,
+    opt ? { origin: opt.origin } : undefined
   );
 }
 
 /**
  * Handle CORS preflight requests
  */
-function handleOptions(): Response {
+function handleOptions({ origin }: { origin: string }): Response {
   return new Response(null, {
     status: 200,
-    headers: createCorsHeaders(),
+    headers: createCorsHeaders({ origin }),
   });
 }
 
@@ -68,6 +69,7 @@ function handleOptions(): Response {
  */
 async function handleRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
+  const origin = request.headers.get("origin") ?? "";
   const { pathname, method } = {
     pathname: url.pathname,
     method: request.method,
@@ -81,14 +83,14 @@ async function handleRequest(request: Request): Promise<Response> {
 
   // Handle CORS preflight
   if (method === 'OPTIONS') {
-    return handleOptions();
+    return handleOptions({ origin });
   }
 
   // Validate authentication
   try {
     validateAuth(request);
   } catch (error) {
-    return createErrorResponse(error);
+    return createErrorResponse(error, { origin });
   }
 
   // Route requests
@@ -163,9 +165,9 @@ async function handleRequest(request: Request): Promise<Response> {
     }
 
     logger.info('Request completed successfully', { method, pathname });
-    return createResponse(result || {});
+    return createResponse(result || {}, 200, { origin });
   } catch (error) {
-    return createErrorResponse(error);
+    return createErrorResponse(error, { origin });
   }
 }
 
@@ -201,10 +203,11 @@ async function main(): Promise<void> {
     hostname: '0.0.0.0',
 
     async fetch(request: Request): Promise<Response> {
+      const origin = request.headers.get("origin") ?? "";
       try {
         return await withTimeout(handleRequest(request), env.TIMEOUT);
       } catch (error) {
-        return createErrorResponse(error);
+        return createErrorResponse(error, { origin });
       }
     },
 
