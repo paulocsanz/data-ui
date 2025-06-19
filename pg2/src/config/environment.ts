@@ -12,6 +12,8 @@ const envSchema = z.object({
   PGPASSWORD: z.string().optional(),
   PGHOST: z.string().optional(),
   PGPORT: z.string().optional(),
+  CLICKHOUSE_URL: z.string().optional(),
+  MONITORING_INTERVAL: z.string().transform(Number).default('5000'),
 });
 
 export type Environment = z.infer<typeof envSchema>;

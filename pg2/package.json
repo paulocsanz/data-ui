@@ -31,6 +31,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@clickhouse/client": "^1.11.2",
     "@types/pg": "^8.15.4",
     "dotenv": "^16.5.0",
     "pg": "^8.16.0",

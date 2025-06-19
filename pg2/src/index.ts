@@ -20,6 +20,10 @@ import {
   deleteObjects,
   generateDummy,
 } from '@/controllers/postgresql';
+import {
+  initializeMonitoring,
+  stopConnectionMonitoring,
+} from '@/services/monitoring';
 
 /**
  * Create a standardized JSON response
@@ -205,6 +209,9 @@ async function main(): Promise<void> {
     timeout: env.TIMEOUT,
   });
 
+  // Initialize monitoring if ClickHouse URL is configured
+  await initializeMonitoring();
+
   const server = Bun.serve({
     port: env.PORT,
     hostname: '0.0.0.0',
@@ -227,6 +234,21 @@ async function main(): Promise<void> {
   logger.info('🚀 Server started successfully', {
     url: `http://${server.hostname}:${server.port}`,
     environment: env.NODE_ENV,
+  });
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    logger.info('Received SIGINT, shutting down gracefully...');
+    stopConnectionMonitoring();
+    void server.stop(true);
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    logger.info('Received SIGTERM, shutting down gracefully...');
+    stopConnectionMonitoring();
+    void server.stop(true);
+    process.exit(0);
   });
 }
 
